@@ -1,0 +1,50 @@
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# SvelteKit / build artifacts
+.svelte-kit/
+/.svelte-kit/
+build/
+dist/
+.vite/
+
+# Editor directories
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PocketBase: ignore everything under /pb except the migrations folder
+/pb/*
+!/pb/pb_migrations/
+!/pb/pb_migrations/**
+
+# Ensure pb_data stays ignored
+/pb/pb_data/
+/pb/pb_data/**
+
+# app/ specific ignores
+/app/.svelte-kit/
+/app/.vscode/
+/app/node_modules/
+/app/build/
+/app/dist/
+/app/.parcel-cache/
+
+# Misc
+.cache/
+coverage/
+dist/
