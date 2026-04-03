@@ -11,6 +11,12 @@
   let project = $state<any>(null);
   let tasks = $state<any[]>([]);
   let isLoading = $state(true);
+  let access = $state<any>(null);
+  let canViewFinancials = $state(false);
+  let canManageFinancials = $state(false);
+  let budgetInput = $state(0);
+  let actualCostInput = $state(0);
+  let errorMsg = $state('');
 
   let columns = [
     { id: 'todo', title: 'To Do' },
@@ -25,7 +31,14 @@
       return;
     }
     try {
-      project = await pb.collection('projects').getOne(projectId);
+      project = await api.projects.getOne(projectId);
+      access = project.access;
+      canViewFinancials = project.access?.canViewFinancials || false;
+      canManageFinancials = project.access?.canManageFinancials || false;
+      if (canViewFinancials) {
+        budgetInput = Number(project.financials?.budget ?? 0);
+        actualCostInput = Number(project.financials?.actualCost ?? 0);
+      }
       tasks = await api.tasks.getForProject(projectId);
 
       // Realtime task updates
@@ -44,6 +57,7 @@
       });
     } catch (e) {
       console.error(e);
+      errorMsg = 'You do not have access to this project.';
       goto('/projects');
     } finally {
       isLoading = false;
@@ -95,6 +109,10 @@
   async function handleDrop(e: DragEvent, colId: string) {
     e.preventDefault();
     dragHoverColumn = null;
+    if (!access?.canEditTask) {
+      draggedTaskId = null;
+      return;
+    }
     const taskId = e.dataTransfer?.getData('text/plain');
     if (taskId) {
       const t = tasks.find(t => t.id === taskId);
@@ -141,6 +159,7 @@
 
   async function createTask() {
     if (!newTaskTitle) return;
+    if (!access?.canCreateTask) return;
     try {
       await api.tasks.create({
         title: newTaskTitle,
@@ -156,6 +175,19 @@
   }
 
   let selectedTask = $state<any>(null);
+
+  async function saveFinancials() {
+    if (!canManageFinancials || !project?.id) return;
+    try {
+      project = await api.projects.update(project.id, {
+        budget: budgetInput || 0,
+        actualCost: actualCostInput || 0
+      });
+    } catch (e) {
+      console.error(e);
+      errorMsg = 'Failed to update financial fields.';
+    }
+  }
 </script>
 
 <svelte:head>
@@ -163,6 +195,9 @@
 </svelte:head>
 
 <div class="board-container">
+  {#if errorMsg}
+    <div class="error-msg">{errorMsg}</div>
+  {/if}
   {#if isLoading}
     <div class="loader-container"><div class="loader"></div></div>
   {:else if project}
@@ -182,7 +217,29 @@
         <button class="toggle-btn {currentView === 'list' ? 'active' : ''}" onclick={() => currentView = 'list'}>List</button>
         <button class="toggle-btn {currentView === 'grid' ? 'active' : ''}" onclick={() => currentView = 'grid'}>Grid</button>
       </div>
-      <button class="add-task-btn" onclick={() => { newTaskStatus = 'todo'; showTaskModal = true; }}>+ Add Task</button>
+      {#if access?.canCreateTask}
+        <button class="add-task-btn" onclick={() => { newTaskStatus = 'todo'; showTaskModal = true; }}>+ Add Task</button>
+      {/if}
+    </div>
+    <div class="meta-toolbar">
+      {#if access?.role}
+        <span class="role-badge">{access.role}</span>
+      {/if}
+      {#if canViewFinancials}
+        <div class="financial-panel">
+          <label for="projectBudgetInput">
+            Budget
+            <input id="projectBudgetInput" type="number" min="0" bind:value={budgetInput} disabled={!canManageFinancials} />
+          </label>
+          <label for="projectActualCostInput">
+            Actual Cost
+            <input id="projectActualCostInput" type="number" min="0" bind:value={actualCostInput} disabled={!canManageFinancials} />
+          </label>
+          {#if canManageFinancials}
+            <button class="save-financial-btn" onclick={saveFinancials}>Save</button>
+          {/if}
+        </div>
+      {/if}
     </div>
 
     <div class="view-container" bind:this={viewContainerContainer}>
@@ -198,7 +255,9 @@
             >
               <div class="col-header">
                 <h3>{col.title} <span class="count">{tasks.filter(t => t.status === col.id).length}</span></h3>
-                <button class="icon-btn" onclick={() => { newTaskStatus = col.id; showTaskModal = true; }} title="Add task in {col.title}">+</button>
+                {#if access?.canCreateTask}
+                  <button class="icon-btn" onclick={() => { newTaskStatus = col.id; showTaskModal = true; }} title="Add task in {col.title}">+</button>
+                {/if}
               </div>
 
               <div class="col-tasks">
@@ -208,7 +267,7 @@
                     class="task-card {draggedTaskId === task.id ? 'dragging' : ''}"
                     role="button"
                     tabindex="0"
-                    draggable="true"
+                    draggable={access?.canEditTask}
                     ondragstart={(e) => handleDragStart(e, task)}
                     ondragend={handleDragEnd}
                     onclick={() => selectedTask = task}
@@ -316,6 +375,67 @@
     flex-direction: column;
     padding: 20px 40px;
     background-color: var(--bg-color);
+  }
+
+  .error-msg {
+    color: #ff4d4d;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .meta-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .role-badge {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-green);
+    background: rgba(29, 185, 84, 0.1);
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+
+  .financial-panel {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .financial-panel label {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    gap: 4px;
+    color: var(--text-muted);
+  }
+
+  .financial-panel input {
+    width: 140px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-main);
+    padding: 6px 8px;
+  }
+
+  .save-financial-btn {
+    background: var(--color-green);
+    color: var(--color-black);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
   }
 
   .loader-container { display: flex; justify-content: center; align-items: center; height: 100%; }

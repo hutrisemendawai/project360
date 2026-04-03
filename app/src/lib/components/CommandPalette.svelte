@@ -53,9 +53,10 @@
     try {
       // Basic search implementation for MVP: Search all projects
       const projs = await api.projects.getAll();
-      const matchedProjs = projs
-        .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        .map(p => ({ type: 'Project', title: p.name, link: `/projects/${p.id}` }));
+      const matchedProjs = (projs as any[])
+        .filter((p) => p && typeof p.name === 'string')
+        .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .map((p) => ({ type: 'Project', title: p.name, link: `/projects/${p.id}` }));
       
       results = [...matchedProjs];
     } catch (e) { console.error('Search failed', e); }

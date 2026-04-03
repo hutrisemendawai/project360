@@ -11,19 +11,31 @@
 
   let projects = $state<any[]>([]);
   let isLoading = $state(true);
+  let canCreateProject = $state(false);
+  let canManageFinancials = $state(false);
+  let errorMsg = $state('');
   
   // New Project modal state
   let showModal = $state(false);
   let newName = $state('');
   let newDesc = $state('');
+  let newBudget = $state('0');
+  let newActualCost = $state('0');
 
   let gridContainer = $state<HTMLElement>();
 
   onMount(async () => {
     try {
-      projects = await api.projects.getAll();
+      const [projectList, workspacePermissions] = await Promise.all([
+        api.projects.getAll(),
+        api.governance.getDefaultWorkspacePermissions()
+      ]);
+      projects = projectList;
+      canCreateProject = workspacePermissions.canCreateProject;
+      canManageFinancials = workspacePermissions.canManageFinancials;
     } catch (e) {
       console.error(e);
+      errorMsg = 'Failed to load projects.';
     } finally {
       isLoading = false;
       // Animate project cards in
@@ -41,17 +53,28 @@
 
   async function createProject() {
     try {
+      if (!canCreateProject) {
+        errorMsg = 'You do not have permission to create projects.';
+        return;
+      }
+
       const p = await api.projects.create({
         name: newName,
         description: newDesc,
-        status: 'active'
+        status: 'active',
+        budget: Number(newBudget),
+        actualCost: Number(newActualCost)
       });
       projects = [p, ...projects];
       showModal = false;
       newName = '';
       newDesc = '';
+      newBudget = '0';
+      newActualCost = '0';
+      errorMsg = '';
     } catch (e) {
       console.error(e);
+      errorMsg = 'Failed to create project.';
     }
   }
 </script>
@@ -63,8 +86,13 @@
 <div class="page-container">
   <div class="header">
     <h1>Projects</h1>
-    <button class="create-btn" onclick={() => showModal = true}>+ New Project</button>
+    {#if canCreateProject}
+      <button class="create-btn" onclick={() => showModal = true}>+ New Project</button>
+    {/if}
   </div>
+  {#if errorMsg}
+    <p class="error-msg">{errorMsg}</p>
+  {/if}
 
   {#if isLoading}
     <div class="loader-container"><div class="loader"></div></div>
@@ -83,6 +111,15 @@
             <span class="status-badge {project.status}">{project.status}</span>
           </div>
           <p class="description">{project.description || 'No description provided.'}</p>
+          {#if project.access?.role}
+            <div class="role-badge">{project.access.role}</div>
+          {/if}
+          {#if project.financials}
+            <div class="finance-summary">
+              <span>Budget: ${project.financials.budget ?? 0}</span>
+              <span>Actual: ${project.financials.actualCost ?? 0}</span>
+            </div>
+          {/if}
           <div class="card-footer">
             <span class="date">Created {new Date(project.created).toLocaleDateString()}</span>
           </div>
@@ -104,6 +141,16 @@
         <label for="newDesc">Description</label>
         <textarea id="newDesc" bind:value={newDesc} placeholder="Optional details..."></textarea>
       </div>
+      {#if canManageFinancials}
+        <div class="input-group">
+          <label for="newBudget">Budget</label>
+          <input id="newBudget" type="number" min="0" bind:value={newBudget} />
+        </div>
+        <div class="input-group">
+          <label for="newActualCost">Actual Cost</label>
+          <input id="newActualCost" type="number" min="0" bind:value={newActualCost} />
+        </div>
+      {/if}
       <div class="modal-actions">
         <button class="cancel" onclick={() => showModal = false}>Cancel</button>
         <button class="save" onclick={createProject} disabled={!newName}>Create</button>
@@ -207,6 +254,33 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex: 1;
+  }
+
+  .role-badge {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-green);
+    background: rgba(29, 185, 84, 0.1);
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+
+  .finance-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .error-msg {
+    color: #ff4d4d;
+    margin: -10px 0 20px 0;
+    font-size: 13px;
   }
 
   .card-footer {
