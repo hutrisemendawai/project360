@@ -225,13 +225,13 @@
       {/if}
       {#if canViewFinancials}
         <div class="financial-panel">
-          <label>
+          <label for="projectBudgetInput">
             Budget
-            <input type="number" min="0" bind:value={budgetInput} disabled={!canManageFinancials} />
+            <input id="projectBudgetInput" type="number" min="0" bind:value={budgetInput} disabled={!canManageFinancials} />
           </label>
-          <label>
+          <label for="projectActualCostInput">
             Actual Cost
-            <input type="number" min="0" bind:value={actualCostInput} disabled={!canManageFinancials} />
+            <input id="projectActualCostInput" type="number" min="0" bind:value={actualCostInput} disabled={!canManageFinancials} />
           </label>
           {#if canManageFinancials}
             <button class="save-financial-btn" onclick={saveFinancials}>Save</button>

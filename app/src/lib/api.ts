@@ -159,6 +159,13 @@ async function logAudit(params: {
   }
 }
 
+function buildFinancialUpdatePayload(data: { budget?: number; actualCost?: number }) {
+  return {
+    ...(data.budget !== undefined ? { budget: data.budget } : {}),
+    ...(data.actualCost !== undefined ? { actualCost: data.actualCost } : {})
+  };
+}
+
 export const api = {
   governance: {
     async getProjectAccess(projectId: string): Promise<ProjectAccess> {
@@ -311,6 +318,7 @@ export const api = {
       }
 
       const hasFinancialUpdates = data.budget !== undefined || data.actualCost !== undefined;
+      const financialUpdates = buildFinancialUpdatePayload(data);
 
       if (hasFinancialUpdates && !access.canManageFinancials) {
         throw new Error('Only admins can manage financial fields.');
@@ -318,10 +326,7 @@ export const api = {
 
       if (hasFinancialUpdates) {
         const financials = await getOrCreateProjectFinancials(id);
-        await pb.collection('project_financials').update(financials.id, {
-          ...(data.budget !== undefined ? { budget: data.budget } : {}),
-          ...(data.actualCost !== undefined ? { actualCost: data.actualCost } : {})
-        });
+        await pb.collection('project_financials').update(financials.id, financialUpdates);
       }
 
       await logAudit({
@@ -333,10 +338,7 @@ export const api = {
         before,
         after: {
           ...updates,
-          ...(hasFinancialUpdates ? {
-            ...(data.budget !== undefined ? { budget: data.budget } : {}),
-            ...(data.actualCost !== undefined ? { actualCost: data.actualCost } : {})
-          } : {})
+          ...(hasFinancialUpdates ? financialUpdates : {})
         }
       });
 
