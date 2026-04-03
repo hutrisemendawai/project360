@@ -24,6 +24,13 @@ import {
 
 type AuditAction = 'create' | 'update' | 'delete';
 
+const ROLE_CAPACITY_HOURS: Record<ProjectRole, number> = {
+  admin: 35,
+  manager: 40,
+  member: 30,
+  guest: 0
+};
+
 type ProjectAccess = {
   role: ProjectRole | null;
   canViewProject: boolean;
@@ -1825,7 +1832,7 @@ export const api = {
         name: member.expand?.user?.name || member.expand?.user?.email || 'User',
         role: member.role,
         hoursLogged: Number(((minutesByUser.get(member.user) || 0) / 60).toFixed(2)),
-        capacityHours: member.role === 'admin' ? 35 : member.role === 'manager' ? 40 : 30
+        capacityHours: ROLE_CAPACITY_HOURS[normalizeRole(member.role)]
       }));
     },
 

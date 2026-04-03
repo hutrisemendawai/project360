@@ -408,6 +408,7 @@
 
 <style>
   .board-container {
+    /* Reserved width for the right-side header controls row (section tabs + add button + gaps). */
     --header-controls-reserved-width: 560px;
     height: 100vh;
     display: flex;
