@@ -98,7 +98,15 @@
 
   async function rolloverToNextSprint(currentSprintId: string) {
     if (!access?.canManageAgile) return;
-    const [nextSprint] = board.sprints.filter((sprint) => sprint.id !== currentSprintId);
+    const current = board.sprints.find((sprint) => sprint.id === currentSprintId);
+    if (!current) return;
+    const sorted = [...board.sprints].sort((a, b) => {
+      const aTime = new Date(a.startDate || a.created).getTime();
+      const bTime = new Date(b.startDate || b.created).getTime();
+      return aTime - bTime;
+    });
+    const currentIndex = sorted.findIndex((sprint) => sprint.id === currentSprintId);
+    const nextSprint = currentIndex >= 0 ? sorted[currentIndex + 1] : null;
     if (!nextSprint) return;
     await api.agile.rolloverIncompleteTasks(currentSprintId, nextSprint.id);
     await loadData();

@@ -1690,14 +1690,15 @@ export const api = {
         pb.collection('sprints').getFullList({ filter: `project = "${projectId}"`, sort: 'startDate' }),
         pb.collection('tasks').getFullList({ filter: `project = "${projectId}"` })
       ]);
-      const completed = tasks.filter((task) => task.status === 'done').length;
-      const perSprint = sprints.map((sprint, index) => ({
+      const completed = tasks.filter((task) => task.status === 'done');
+      const averageVelocity = sprints.length === 0 ? completed.length : completed.length / Math.max(1, sprints.length);
+      const perSprint = sprints.map((sprint) => ({
         sprint: sprint.name,
-        velocity: sprints.length === 0 ? 0 : Math.round(completed / Math.max(1, sprints.length) + index * 0)
+        velocity: Math.round(averageVelocity)
       }));
       return {
         velocityTrend: perSprint,
-        totalCompleted: completed
+        totalCompleted: completed.length
       };
     },
 

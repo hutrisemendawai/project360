@@ -408,6 +408,7 @@
 
 <style>
   .board-container {
+    --header-controls-reserved-width: 560px;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -542,7 +543,7 @@
     border-radius: 8px;
     overflow-x: auto;
     margin-right: 15px;
-    max-width: calc(100vw - 560px);
+    max-width: calc(100vw - var(--header-controls-reserved-width));
   }
 
   .toggle-btn {

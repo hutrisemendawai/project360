@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api } from '$lib/api';
+  import { pb } from '$lib/pocketbase';
   import { onMount } from 'svelte';
 
   let { project, access } = $props<{ project: any; access: any }>();
@@ -18,7 +19,7 @@
   }
 
   function fileUrl(record: any) {
-    return api ? `http://127.0.0.1:8090/api/files/${record.collectionId}/${record.id}/${record.file}` : '';
+    return `${pb.baseUrl}/api/files/${record.collectionId}/${record.id}/${record.file}`;
   }
 
   async function loadAttachments() {
