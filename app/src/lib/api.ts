@@ -9,6 +9,7 @@ import {
   canManageFinancials as hasFinancialManagePermission,
   canViewFinancials as hasFinancialViewPermission,
   canViewProject as hasProjectViewPermission,
+  rolePriority,
   normalizeRole,
   type ProjectRole
 } from './permissions';
@@ -139,6 +140,7 @@ async function logAudit(params: {
   workspace?: string;
   before?: unknown;
   after?: unknown;
+  critical?: boolean;
 }) {
   const userId = pb.authStore.record?.id;
   if (!userId) return;
@@ -156,6 +158,9 @@ async function logAudit(params: {
     });
   } catch (err) {
     console.warn('Failed to write audit log', err);
+    if (params.critical) {
+      throw new Error('Failed to write required audit log entry.');
+    }
   }
 }
 
@@ -172,16 +177,23 @@ export const api = {
       return getProjectAccess(projectId);
     },
 
-    async canCreateProjectInDefaultWorkspace(): Promise<boolean> {
+    async getDefaultWorkspacePermissions(): Promise<{ canCreateProject: boolean; canManageFinancials: boolean }> {
       const workspaceId = await ensureDefaultWorkspaceForCurrentUser();
       const role = await getWorkspaceRole(workspaceId);
-      return role === 'admin' || role === 'manager' || role === 'member';
+      return {
+        canCreateProject: role === 'admin' || role === 'manager' || role === 'member',
+        canManageFinancials: role === 'admin'
+      };
+    },
+
+    async canCreateProjectInDefaultWorkspace(): Promise<boolean> {
+      const permissions = await this.getDefaultWorkspacePermissions();
+      return permissions.canCreateProject;
     },
 
     async canManageFinancialsInDefaultWorkspace(): Promise<boolean> {
-      const workspaceId = await ensureDefaultWorkspaceForCurrentUser();
-      const role = await getWorkspaceRole(workspaceId);
-      return role === 'admin';
+      const permissions = await this.getDefaultWorkspacePermissions();
+      return permissions.canManageFinancials;
     }
   },
 
@@ -196,7 +208,11 @@ export const api = {
 
       const rolesByProject = new Map<string, ProjectRole>();
       memberships.forEach((membership) => {
-        rolesByProject.set(membership.project, normalizeRole(membership.role));
+        const nextRole = normalizeRole(membership.role);
+        const existingRole = rolesByProject.get(membership.project);
+        if (!existingRole || rolePriority[nextRole] > rolePriority[existingRole]) {
+          rolesByProject.set(membership.project, nextRole);
+        }
       });
 
       const adminProjectIds = [...rolesByProject.entries()]
@@ -205,14 +221,18 @@ export const api = {
 
       const financialsByProject = new Map<string, { budget: number; actualCost: number }>();
       if (adminProjectIds.length > 0) {
-        const filters = adminProjectIds.map((id) => `project = "${id}"`).join(' || ');
-        const financials = await pb.collection('project_financials').getFullList({ filter: filters });
-        financials.forEach((record) => {
-          financialsByProject.set(record.project, {
-            budget: record.budget || 0,
-            actualCost: record.actualCost || 0
+        const batchSize = 50;
+        for (let i = 0; i < adminProjectIds.length; i += batchSize) {
+          const batchIds = adminProjectIds.slice(i, i + batchSize);
+          const filters = batchIds.map((id) => `project = "${id}"`).join(' || ');
+          const financials = await pb.collection('project_financials').getFullList({ filter: filters });
+          financials.forEach((record) => {
+            financialsByProject.set(record.project, {
+              budget: record.budget || 0,
+              actualCost: record.actualCost || 0
+            });
           });
-        });
+        }
       }
 
       return projects
@@ -368,7 +388,8 @@ export const api = {
         entityId: id,
         project: id,
         workspace: before.workspace,
-        before
+        before,
+        critical: true
       });
     }
   },
@@ -444,7 +465,8 @@ export const api = {
         entityId: id,
         project: task.project,
         workspace: project.workspace,
-        before: task
+        before: task,
+        critical: true
       });
     }
   },
@@ -463,18 +485,19 @@ export const api = {
       });
     },
 
-    async create(data: { task: string; content: string; author: string }) {
+    async create(data: { task: string; content: string }) {
       const userId = requireUserId();
-      if (data.author !== userId) {
-        throw new Error('Cannot post comments as another user.');
-      }
 
       const { task, access } = await getTaskWithAccess(data.task);
       if (!access.canComment) {
         throw new Error('You do not have permission to comment in this project.');
       }
 
-      const created = await pb.collection('comments').create(data);
+      const created = await pb.collection('comments').create({
+        task: data.task,
+        content: data.content,
+        author: userId
+      });
       const project = await pb.collection('projects').getOne(task.project);
 
       await logAudit({
@@ -507,7 +530,8 @@ export const api = {
         entityId: id,
         project: task.project,
         workspace: project.workspace,
-        before: comment
+        before: comment,
+        critical: true
       });
     }
   }

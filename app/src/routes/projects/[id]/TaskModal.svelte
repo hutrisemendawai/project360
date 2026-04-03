@@ -45,8 +45,7 @@
     try {
       await api.comments.create({
         task: task.id,
-        content: newComment,
-        author: $currentUser.id
+        content: newComment
       });
       newComment = '';
     } catch (e) {
