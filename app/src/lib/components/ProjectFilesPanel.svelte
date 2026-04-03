@@ -12,10 +12,11 @@
   let versionFile = $state<File | null>(null);
   let isLoading = $state(false);
   let error = $state('');
+  const PREVIEWABLE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.pdf'];
 
   function isPreviewable(fileName: string) {
     const lower = fileName.toLowerCase();
-    return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.endsWith('.pdf');
+    return PREVIEWABLE_EXTENSIONS.some((ext) => lower.endsWith(ext));
   }
 
   function fileUrl(record: any) {

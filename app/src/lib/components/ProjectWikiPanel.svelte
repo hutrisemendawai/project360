@@ -208,8 +208,14 @@
 </div>
 
 <style>
-  .panel { display: flex; flex-direction: column; gap: 12px; }
-  .layout { display: grid; grid-template-columns: 280px 1fr; gap: 12px; min-height: 460px; }
+  .panel {
+    --wiki-sidebar-width: 280px;
+    --wiki-min-height: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .layout { display: grid; grid-template-columns: var(--wiki-sidebar-width) 1fr; gap: 12px; min-height: var(--wiki-min-height); }
   .sidebar, .content { background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
   .sidebar { display: flex; flex-direction: column; gap: 6px; }
   .item { text-align: left; border: 1px solid var(--border-color); background: var(--bg-color); border-radius: 6px; padding: 6px 8px; }

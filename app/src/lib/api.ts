@@ -24,6 +24,11 @@ import {
 
 type AuditAction = 'create' | 'update' | 'delete';
 
+function slugify(value: string): string {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+// Expected weekly capacity hours per project role used in workload planning views.
 const ROLE_CAPACITY_HOURS: Record<ProjectRole, number> = {
   admin: 35,
   manager: 40,
@@ -713,7 +718,7 @@ export const api = {
       if (!access.canManageWiki) {
         throw new Error('You do not have permission to edit wiki pages in this project.');
       }
-      const slug = data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = slugify(data.title);
       const created = await pb.collection('wiki_pages').create({
         project: data.project,
         title: data.title,
@@ -744,7 +749,7 @@ export const api = {
       const updates: Record<string, unknown> = { lastEditedBy: userId };
       if (typeof data.title === 'string') {
         updates.title = data.title;
-        updates.slug = data.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        updates.slug = slugify(data.title);
       }
       if (typeof data.content === 'string') updates.content = data.content;
       if (data.parent !== undefined) updates.parent = data.parent || null;

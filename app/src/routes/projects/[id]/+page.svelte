@@ -408,7 +408,7 @@
 
 <style>
   .board-container {
-    /* Reserved width for the right-side header controls row (section tabs + add button + gaps). */
+    /* Reserved header width budget: tabs rail (~420px) + add-task button (~120px) + right margin/gap (~20px). */
     --header-controls-reserved-width: 560px;
     height: 100vh;
     display: flex;
