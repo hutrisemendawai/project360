@@ -1,14 +1,14 @@
 import { pb } from './pocketbase';
 import {
-  canComment,
-  canCreateTask,
-  canDeleteProject,
-  canDeleteTask,
-  canEditTask,
-  canManageProject,
-  canManageFinancials,
-  canViewFinancials,
-  canViewProject,
+  canComment as hasCommentPermission,
+  canCreateTask as hasTaskCreatePermission,
+  canDeleteProject as hasProjectDeletePermission,
+  canDeleteTask as hasTaskDeletePermission,
+  canEditTask as hasTaskEditPermission,
+  canManageProject as hasProjectManagePermission,
+  canManageFinancials as hasFinancialManagePermission,
+  canViewFinancials as hasFinancialViewPermission,
+  canViewProject as hasProjectViewPermission,
   normalizeRole,
   type ProjectRole
 } from './permissions';
@@ -31,15 +31,15 @@ type ProjectAccess = {
 function buildAccess(role: ProjectRole | null): ProjectAccess {
   return {
     role,
-    canViewProject: canViewProject(role),
-    canCreateTask: canCreateTask(role),
-    canEditTask: canEditTask(role),
-    canDeleteTask: canDeleteTask(role),
-    canComment: canComment(role),
-    canManageProject: canManageProject(role),
-    canDeleteProject: canDeleteProject(role),
-    canViewFinancials: canViewFinancials(role),
-    canManageFinancials: canManageFinancials(role)
+    canViewProject: hasProjectViewPermission(role),
+    canCreateTask: hasTaskCreatePermission(role),
+    canEditTask: hasTaskEditPermission(role),
+    canDeleteTask: hasTaskDeletePermission(role),
+    canComment: hasCommentPermission(role),
+    canManageProject: hasProjectManagePermission(role),
+    canDeleteProject: hasProjectDeletePermission(role),
+    canViewFinancials: hasFinancialViewPermission(role),
+    canManageFinancials: hasFinancialManagePermission(role)
   };
 }
 
@@ -98,7 +98,7 @@ async function ensureDefaultWorkspaceForCurrentUser(): Promise<string> {
     return membership.workspace;
   } catch {
     const org = await pb.collection('organizations').create({
-      name: `${pb.authStore.record?.name || pb.authStore.record?.email || 'Workspace'} Org`,
+      name: `${pb.authStore.record?.name || pb.authStore.record?.email || 'Organization'} Org`,
       owner: userId
     });
 
@@ -331,7 +331,13 @@ export const api = {
         project: id,
         workspace: before.workspace,
         before,
-        after: { ...updates, budget: data.budget, actualCost: data.actualCost }
+        after: {
+          ...updates,
+          ...(hasFinancialUpdates ? {
+            ...(data.budget !== undefined ? { budget: data.budget } : {}),
+            ...(data.actualCost !== undefined ? { actualCost: data.actualCost } : {})
+          } : {})
+        }
       });
 
       return this.getOne(project.id);

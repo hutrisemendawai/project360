@@ -14,8 +14,8 @@
   let access = $state<any>(null);
   let canViewFinancials = $state(false);
   let canManageFinancials = $state(false);
-  let budgetInput = $state('0');
-  let actualCostInput = $state('0');
+  let budgetInput = $state(0);
+  let actualCostInput = $state(0);
   let errorMsg = $state('');
 
   let columns = [
@@ -35,8 +35,8 @@
       access = project.access;
       canViewFinancials = project.access?.canViewFinancials || false;
       canManageFinancials = project.access?.canManageFinancials || false;
-      budgetInput = String(project.financials?.budget ?? 0);
-      actualCostInput = String(project.financials?.actualCost ?? 0);
+      budgetInput = Number(project.financials?.budget ?? 0);
+      actualCostInput = Number(project.financials?.actualCost ?? 0);
       tasks = await api.tasks.getForProject(projectId);
 
       // Realtime task updates
@@ -178,8 +178,8 @@
     if (!canManageFinancials || !project?.id) return;
     try {
       project = await api.projects.update(project.id, {
-        budget: Number(budgetInput) || 0,
-        actualCost: Number(actualCostInput) || 0
+        budget: budgetInput || 0,
+        actualCost: actualCostInput || 0
       });
     } catch (e) {
       console.error(e);

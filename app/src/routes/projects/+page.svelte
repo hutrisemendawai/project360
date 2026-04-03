@@ -33,7 +33,7 @@
       ]);
       projects = projectList;
       canCreateProject = canCreate;
-      canManageFinancials = canManageFinancialsInWorkspace || projects.some((project) => project.access?.canManageFinancials);
+      canManageFinancials = canManageFinancialsInWorkspace;
     } catch (e) {
       console.error(e);
       errorMsg = 'Failed to load projects.';
@@ -63,7 +63,8 @@
         name: newName,
         description: newDesc,
         status: 'active',
-        ...(canManageFinancials ? { budget: Number(newBudget) || 0, actualCost: Number(newActualCost) || 0 } : {})
+        budget: Number(newBudget) || 0,
+        actualCost: Number(newActualCost) || 0
       });
       projects = [p, ...projects];
       showModal = false;
