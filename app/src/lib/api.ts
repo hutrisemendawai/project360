@@ -1691,11 +1691,21 @@ export const api = {
         pb.collection('tasks').getFullList({ filter: `project = "${projectId}"` })
       ]);
       const completed = tasks.filter((task) => task.status === 'done');
-      const averageVelocity = sprints.length === 0 ? completed.length : completed.length / Math.max(1, sprints.length);
-      const perSprint = sprints.map((sprint) => ({
-        sprint: sprint.name,
-        velocity: Math.round(averageVelocity)
+      const completedWithDates = completed.map((task) => ({
+        ...task,
+        completedAt: new Date(task.updated).getTime()
       }));
+      const perSprint = sprints.map((sprint) => {
+        const sprintStart = new Date(sprint.startDate || sprint.created).getTime();
+        const sprintEnd = new Date(sprint.endDate || sprint.updated || sprint.created).getTime();
+        const sprintVelocity = completedWithDates.filter(
+          (task) => task.completedAt >= sprintStart && task.completedAt <= sprintEnd
+        ).length;
+        return {
+        sprint: sprint.name,
+        velocity: sprintVelocity
+      };
+      });
       return {
         velocityTrend: perSprint,
         totalCompleted: completed.length
