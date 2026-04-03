@@ -49,3 +49,35 @@ export function canViewFinancials(role: ProjectRole | null): boolean {
 export function canManageFinancials(role: ProjectRole | null): boolean {
   return role === 'admin';
 }
+
+export function canManageFiles(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager' || role === 'member';
+}
+
+export function canManageWiki(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager' || role === 'member';
+}
+
+export function canManageMilestones(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager' || role === 'member';
+}
+
+export function canManageCalendar(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager';
+}
+
+export function canManageTime(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager' || role === 'member';
+}
+
+export function canManageBilling(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager';
+}
+
+export function canManageAgile(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager' || role === 'member';
+}
+
+export function canViewReports(role: ProjectRole | null): boolean {
+  return role === 'admin' || role === 'manager';
+}

@@ -6,6 +6,14 @@
   import { goto } from '$app/navigation';
   import { gsap } from 'gsap';
   import TaskModal from './TaskModal.svelte';
+  import ProjectFilesPanel from '$lib/components/ProjectFilesPanel.svelte';
+  import ProjectWikiPanel from '$lib/components/ProjectWikiPanel.svelte';
+  import ProjectSearchPanel from '$lib/components/ProjectSearchPanel.svelte';
+  import ProjectMilestonesPanel from '$lib/components/ProjectMilestonesPanel.svelte';
+  import ProjectCalendarPanel from '$lib/components/ProjectCalendarPanel.svelte';
+  import ProjectTimeBillingPanel from '$lib/components/ProjectTimeBillingPanel.svelte';
+  import ProjectAgilePanel from '$lib/components/ProjectAgilePanel.svelte';
+  import ProjectReportsPanel from '$lib/components/ProjectReportsPanel.svelte';
 
   let projectId = $derived($page.params.id as string);
   let project = $state<any>(null);
@@ -135,6 +143,7 @@
 
   // View toggle
   let currentView = $state('kanban'); // kanban, list, grid
+  let currentSection = $state('tasks'); // tasks, files, wiki, search, milestones, calendar, time, agile, reports
 
   // Target element for GSAP animation
   let viewContainerContainer = $state<HTMLElement>();
@@ -213,9 +222,15 @@
         {/if}
       </div>
       <div class="view-toggles">
-        <button class="toggle-btn {currentView === 'kanban' ? 'active' : ''}" onclick={() => currentView = 'kanban'}>Kanban</button>
-        <button class="toggle-btn {currentView === 'list' ? 'active' : ''}" onclick={() => currentView = 'list'}>List</button>
-        <button class="toggle-btn {currentView === 'grid' ? 'active' : ''}" onclick={() => currentView = 'grid'}>Grid</button>
+        <button class="toggle-btn {currentSection === 'tasks' ? 'active' : ''}" onclick={() => currentSection = 'tasks'}>Tasks</button>
+        <button class="toggle-btn {currentSection === 'files' ? 'active' : ''}" onclick={() => currentSection = 'files'}>Files</button>
+        <button class="toggle-btn {currentSection === 'wiki' ? 'active' : ''}" onclick={() => currentSection = 'wiki'}>Wiki</button>
+        <button class="toggle-btn {currentSection === 'search' ? 'active' : ''}" onclick={() => currentSection = 'search'}>Search</button>
+        <button class="toggle-btn {currentSection === 'milestones' ? 'active' : ''}" onclick={() => currentSection = 'milestones'}>Milestones</button>
+        <button class="toggle-btn {currentSection === 'calendar' ? 'active' : ''}" onclick={() => currentSection = 'calendar'}>Calendar</button>
+        <button class="toggle-btn {currentSection === 'time' ? 'active' : ''}" onclick={() => currentSection = 'time'}>Time & Billing</button>
+        <button class="toggle-btn {currentSection === 'agile' ? 'active' : ''}" onclick={() => currentSection = 'agile'}>Agile</button>
+        <button class="toggle-btn {currentSection === 'reports' ? 'active' : ''}" onclick={() => currentSection = 'reports'}>Reports</button>
       </div>
       {#if access?.canCreateTask}
         <button class="add-task-btn" onclick={() => { newTaskStatus = 'todo'; showTaskModal = true; }}>+ Add Task</button>
@@ -243,7 +258,14 @@
     </div>
 
     <div class="view-container" bind:this={viewContainerContainer}>
-      {#if currentView === 'kanban'}
+      {#if currentSection === 'tasks'}
+        <div class="sub-view-toggles">
+          <button class="toggle-btn {currentView === 'kanban' ? 'active' : ''}" onclick={() => currentView = 'kanban'}>Kanban</button>
+          <button class="toggle-btn {currentView === 'list' ? 'active' : ''}" onclick={() => currentView = 'list'}>List</button>
+          <button class="toggle-btn {currentView === 'grid' ? 'active' : ''}" onclick={() => currentView = 'grid'}>Grid</button>
+        </div>
+      {/if}
+      {#if currentSection === 'tasks' && currentView === 'kanban'}
         <div class="kanban-board">
           {#each columns as col}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -286,7 +308,7 @@
             </div>
           {/each}
         </div>
-      {:else if currentView === 'list'}
+      {:else if currentSection === 'tasks' && currentView === 'list'}
         <div class="list-view">
           <table class="tasks-table">
             <thead>
@@ -315,7 +337,7 @@
             </tbody>
           </table>
         </div>
-      {:else if currentView === 'grid'}
+      {:else if currentSection === 'tasks' && currentView === 'grid'}
         <div class="grid-view">
           {#each tasks as task}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -330,6 +352,22 @@
             </div>
           {/each}
         </div>
+      {:else if currentSection === 'files'}
+        <ProjectFilesPanel {project} {access} />
+      {:else if currentSection === 'wiki'}
+        <ProjectWikiPanel {project} {access} />
+      {:else if currentSection === 'search'}
+        <ProjectSearchPanel {project} />
+      {:else if currentSection === 'milestones'}
+        <ProjectMilestonesPanel {project} {access} />
+      {:else if currentSection === 'calendar'}
+        <ProjectCalendarPanel {project} {access} />
+      {:else if currentSection === 'time'}
+        <ProjectTimeBillingPanel {project} {access} />
+      {:else if currentSection === 'agile'}
+        <ProjectAgilePanel {project} {access} />
+      {:else if currentSection === 'reports'}
+        <ProjectReportsPanel {project} {access} />
       {/if}
     </div>
   {/if}
@@ -494,7 +532,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: hidden;
+    overflow-y: auto;
   }
 
   .view-toggles {
@@ -502,8 +540,9 @@
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
     margin-right: 15px;
+    max-width: calc(100vw - 560px);
   }
 
   .toggle-btn {
@@ -513,6 +552,17 @@
     font-weight: 500;
     transition: all 0.2s;
     border-right: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+
+  .sub-view-toggles {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 10px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
   }
   .toggle-btn:last-child { border-right: none; }
   .toggle-btn:hover { background: var(--surface-hover); color: var(--text-main); }
