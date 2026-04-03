@@ -169,6 +169,12 @@ export const api = {
       const workspaceId = await ensureDefaultWorkspaceForCurrentUser();
       const role = await getWorkspaceRole(workspaceId);
       return role === 'admin' || role === 'manager' || role === 'member';
+    },
+
+    async canManageFinancialsInDefaultWorkspace(): Promise<boolean> {
+      const workspaceId = await ensureDefaultWorkspaceForCurrentUser();
+      const role = await getWorkspaceRole(workspaceId);
+      return role === 'admin';
     }
   },
 

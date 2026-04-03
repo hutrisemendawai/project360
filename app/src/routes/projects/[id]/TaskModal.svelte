@@ -8,9 +8,12 @@
   let comments = $state<any[]>([]);
   let newComment = $state('');
   let isLoading = $state(true);
+  let canCommentOnTask = $state(true);
 
   onMount(async () => {
     try {
+      const access = await api.governance.getProjectAccess(task.project);
+      canCommentOnTask = access.canComment;
       comments = await api.comments.getForTask(task.id);
       
       pb.collection('comments').subscribe('*', function (e) {
@@ -93,7 +96,7 @@
 
           <div class="comment-input-area">
             <textarea bind:value={newComment} placeholder="Add a comment..."></textarea>
-            <button class="save" onclick={postComment} disabled={!newComment.trim()}>Comment</button>
+            <button class="save" onclick={postComment} disabled={!newComment.trim() || !canCommentOnTask}>Comment</button>
           </div>
         </section>
       </div>
