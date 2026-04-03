@@ -99,7 +99,7 @@ async function ensureDefaultWorkspaceForCurrentUser(): Promise<string> {
     return membership.workspace;
   } catch {
     const organization = await pb.collection('organizations').create({
-      name: `${pb.authStore.record?.name || pb.authStore.record?.email || 'Organization'}`,
+      name: `${pb.authStore.record?.name || pb.authStore.record?.email || 'User Organization'}`,
       owner: userId
     });
 
@@ -221,6 +221,7 @@ export const api = {
 
       const financialsByProject = new Map<string, { budget: number; actualCost: number }>();
       if (adminProjectIds.length > 0) {
+        // Keep query length safe and avoid oversized OR filters for large org datasets.
         const batchSize = 50;
         for (let i = 0; i < adminProjectIds.length; i += batchSize) {
           const batchIds = adminProjectIds.slice(i, i + batchSize);

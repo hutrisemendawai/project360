@@ -35,8 +35,10 @@
       access = project.access;
       canViewFinancials = project.access?.canViewFinancials || false;
       canManageFinancials = project.access?.canManageFinancials || false;
-      budgetInput = Number(project.financials?.budget ?? 0);
-      actualCostInput = Number(project.financials?.actualCost ?? 0);
+      if (canViewFinancials) {
+        budgetInput = Number(project.financials?.budget ?? 0);
+        actualCostInput = Number(project.financials?.actualCost ?? 0);
+      }
       tasks = await api.tasks.getForProject(projectId);
 
       // Realtime task updates

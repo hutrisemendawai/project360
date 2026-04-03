@@ -62,8 +62,8 @@
         name: newName,
         description: newDesc,
         status: 'active',
-        budget: Number(newBudget) || 0,
-        actualCost: Number(newActualCost) || 0
+        budget: Number(newBudget),
+        actualCost: Number(newActualCost)
       });
       projects = [p, ...projects];
       showModal = false;
