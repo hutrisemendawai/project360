@@ -98,7 +98,7 @@ async function ensureDefaultWorkspaceForCurrentUser(): Promise<string> {
     return membership.workspace;
   } catch {
     const org = await pb.collection('organizations').create({
-      name: `${pb.authStore.record?.name || pb.authStore.record?.email || 'Organization'} Org`,
+      name: `${pb.authStore.record?.name || pb.authStore.record?.email || 'Organization'}`,
       owner: userId
     });
 

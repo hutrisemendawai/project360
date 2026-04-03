@@ -403,7 +403,7 @@
   .financial-panel {
     display: flex;
     gap: 10px;
-    align-items: end;
+    align-items: flex-end;
     flex-wrap: wrap;
     background: var(--surface-color);
     border: 1px solid var(--border-color);
