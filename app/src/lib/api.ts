@@ -1,4 +1,5 @@
 import { pb } from './pocketbase';
+import { slugify } from './utils';
 import {
   canComment as hasCommentPermission,
   canCreateTask as hasTaskCreatePermission,
@@ -24,11 +25,9 @@ import {
 
 type AuditAction = 'create' | 'update' | 'delete';
 
-function slugify(value: string): string {
-  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
-
-// Expected weekly capacity hours per project role used in workload planning views.
+// Expected weekly project allocation (hours): managers own full planning cadence (40h),
+// admins typically split across oversight/governance (35h), members focus on delivery (30h),
+// guests are non-planned observers (0h).
 const ROLE_CAPACITY_HOURS: Record<ProjectRole, number> = {
   admin: 35,
   manager: 40,

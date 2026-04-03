@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PREVIEWABLE_EXTENSIONS } from '$lib/constants';
   import { api } from '$lib/api';
   import { pb } from '$lib/pocketbase';
   import { onMount } from 'svelte';
@@ -12,7 +13,6 @@
   let versionFile = $state<File | null>(null);
   let isLoading = $state(false);
   let error = $state('');
-  const PREVIEWABLE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.pdf'];
 
   function isPreviewable(fileName: string) {
     const lower = fileName.toLowerCase();

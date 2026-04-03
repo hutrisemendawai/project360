@@ -209,7 +209,9 @@
 
 <style>
   .panel {
+    /* Sidebar width keeps hierarchical page labels readable without overcrowding the editor pane. */
     --wiki-sidebar-width: 280px;
+    /* Minimum panel height preserves comfortable editing/preview layout before internal scrolling kicks in. */
     --wiki-min-height: 460px;
     display: flex;
     flex-direction: column;
