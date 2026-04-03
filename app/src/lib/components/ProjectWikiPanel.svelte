@@ -17,10 +17,10 @@
   let linkTitle = $state('');
   let error = $state('');
 
-  function buildTree(items: any[], parent: string | null = null) {
+  function buildTree(items: any[], parent: string | null = null): any[] {
     return items
       .filter((item) => (item.parent || null) === parent)
-      .map((item) => ({
+      .map((item): any => ({
         ...item,
         children: buildTree(items, item.id)
       }));

@@ -109,6 +109,8 @@
   {#if access?.canManageFiles}
     <div
       class="dropzone"
+      role="region"
+      aria-label="File drop zone"
       ondragover={(e) => e.preventDefault()}
       ondrop={onDropUpload}
     >
@@ -140,7 +142,7 @@
         <h4>{selectedAttachment.name}</h4>
         {#if isPreviewable(selectedAttachment.file)}
           {#if selectedAttachment.file.toLowerCase().endsWith('.pdf')}
-            <iframe src={fileUrl(selectedAttachment)} title="Attachment preview" />
+            <iframe src={fileUrl(selectedAttachment)} title="Attachment preview"></iframe>
           {:else}
             <img src={fileUrl(selectedAttachment)} alt={selectedAttachment.name} />
           {/if}
