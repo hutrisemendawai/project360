@@ -116,7 +116,7 @@
   .panel { display: flex; flex-direction: column; gap: 12px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .card { border: 1px solid var(--border-color); border-radius: 8px; background: var(--surface-color); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
   .row input, .row select { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); padding: 8px; }
   ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
   code { font-size: 12px; color: var(--text-muted); }
