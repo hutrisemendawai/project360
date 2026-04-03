@@ -310,11 +310,13 @@ export const api = {
         project = await pb.collection('projects').update(id, updates);
       }
 
-      if ((data.budget !== undefined || data.actualCost !== undefined) && !access.canManageFinancials) {
+      const hasFinancialUpdates = data.budget !== undefined || data.actualCost !== undefined;
+
+      if (hasFinancialUpdates && !access.canManageFinancials) {
         throw new Error('Only admins can manage financial fields.');
       }
 
-      if (data.budget !== undefined || data.actualCost !== undefined) {
+      if (hasFinancialUpdates) {
         const financials = await getOrCreateProjectFinancials(id);
         await pb.collection('project_financials').update(financials.id, {
           ...(data.budget !== undefined ? { budget: data.budget } : {}),

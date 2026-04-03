@@ -33,8 +33,8 @@
     try {
       project = await api.projects.getOne(projectId);
       access = project.access;
-      canViewFinancials = !!project.access?.canViewFinancials;
-      canManageFinancials = !!project.access?.canManageFinancials;
+      canViewFinancials = project.access?.canViewFinancials || false;
+      canManageFinancials = project.access?.canManageFinancials || false;
       budgetInput = String(project.financials?.budget ?? 0);
       actualCostInput = String(project.financials?.actualCost ?? 0);
       tasks = await api.tasks.getForProject(projectId);

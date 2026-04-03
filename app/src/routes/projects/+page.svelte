@@ -26,14 +26,14 @@
 
   onMount(async () => {
     try {
-      const [projectList, canCreate, canManageFinancialsDefault] = await Promise.all([
+      const [projectList, canCreate, canManageFinancialsInWorkspace] = await Promise.all([
         api.projects.getAll(),
         api.governance.canCreateProjectInDefaultWorkspace(),
         api.governance.canManageFinancialsInDefaultWorkspace()
       ]);
       projects = projectList;
       canCreateProject = canCreate;
-      canManageFinancials = canManageFinancialsDefault || projects.some((project) => project.access?.canManageFinancials);
+      canManageFinancials = canManageFinancialsInWorkspace || projects.some((project) => project.access?.canManageFinancials);
     } catch (e) {
       console.error(e);
       errorMsg = 'Failed to load projects.';
